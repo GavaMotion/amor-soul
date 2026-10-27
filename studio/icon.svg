@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs><radialGradient id="o" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#EBCFC6"/></radialGradient></defs>
+  <rect width="512" height="512" rx="112" fill="#F5EEE4"/>
+  <circle cx="370" cy="140" r="86" fill="url(#o)"/>
+  <text x="256" y="318" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="210" font-style="italic" fill="#3A2920">A<tspan fill="#C39A6B">&amp;</tspan>S</text>
+</svg>

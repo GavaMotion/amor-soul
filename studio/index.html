@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amor & Soul · Studio</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  body{min-height:100vh}
+  .studio{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+  .side{padding:28px 18px;border-right:1px solid var(--line);position:sticky;top:0;height:100vh}
+  .side .logo{font-size:19px;display:block;margin-bottom:4px}
+  .side nav{display:flex;flex-direction:column;gap:4px;margin-top:28px}
+  .side nav button{text-align:left;padding:11px 14px;border-radius:12px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--mocha)}
+  .side nav button[aria-current]{background:var(--paper);color:var(--chocolate);box-shadow:var(--clay-sm)}
+  .main{padding:32px 40px 80px;max-width:980px}
+  .block-row{display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:10px;border-radius:16px;background:var(--paper);box-shadow:var(--clay-sm)}
+  .block-row .grip{display:flex;flex-direction:column;gap:2px}
+  .block-row .grip button{width:28px;height:22px;border-radius:6px;font-size:12px;color:var(--mocha)}
+  .block-row .grip button:hover{background:var(--cream)}
+  .block-row .name{flex:1;font-family:var(--serif);font-size:20px}
+  .cal{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .day{padding:12px;border-radius:14px;background:var(--paper);box-shadow:var(--clay-sm);text-align:left;font-size:13px;min-height:92px}
+  .day b{display:block;font-weight:500;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mocha)}
+  .day .r{font-family:var(--serif);font-size:16px;margin-top:4px;line-height:1.15}
+  .st{display:inline-block;margin-top:6px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:2px 8px;border-radius:9px;background:var(--cream)}
+  .st.scheduled{background:#E3EADB;color:#4B5E3C}.st.draft{background:#F3E3C8;color:#7A5A2C}
+  .day.today{outline:1.5px solid var(--chocolate)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+  .stats .n{font-family:var(--serif);font-size:40px;line-height:1}
+  .log{font-size:13px;color:var(--mocha)}
+  .log div{padding:8px 0;border-bottom:1px solid var(--line)}
+  select.input{appearance:none;padding-right:30px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .note{font-size:13px;color:var(--mocha);background:var(--paper);border-radius:14px;padding:12px 16px;box-shadow:var(--clay-sm);margin-bottom:22px}
+  @media (max-width:800px){.studio{grid-template-columns:1fr}.side{position:static;height:auto;border:0}.side nav{flex-direction:row;overflow-x:auto}.main{padding:20px 18px 60px}.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="studio">
+  <aside class="side">
+    <span class="logo">Amor<em>&amp;</em>Soul</span><span class="eyebrow">Studio</span>
+    <nav id="nav">
+      <button data-p="home" aria-current="page">Home layout</button>
+      <button data-p="soul">Soul Daily</button>
+      <button data-p="push">Notifications</button>
+      <button data-p="metrics">Metrics</button>
+      <button data-p="history">History</button>
+    </nav>
+    <a class="btn btn-ghost btn-sm" href="../" target="amorsoul" style="margin-top:28px">Open app ↗</a>
+  </aside>
+  <main class="main" id="page"></main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="content.js"></script>
+<script>
+/* Prototype CMS. Writes to localStorage; the open app listens for the change
+   and re-renders, the same way the real app refetches from the CMS API. */
+(function(){
+  const C = window.AS_CONTENT;
+  const get=(k,d)=>{try{const v=localStorage.getItem("as."+k);return v?JSON.parse(v):d}catch{return d}};
+  const set=(k,v)=>{try{localStorage.setItem("as."+k,JSON.stringify(v))}catch{}};
+  const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const $=s=>document.querySelector(s);
+  const cms=Object.assign({home:{},schedule:{}},get("cms",{}));
+  let draft={hero:Object.assign({},C.home.hero,cms.home.hero),blocks:(cms.home.blocks||C.home.blocks).map(b=>({...b}))};
+  const NAMES={hero:"Main banner",soul:"Your Daily Soul",loving:"Currently Loving",outfit:"Outfit of the Week",gift:"The Gift Edit",woman:"The Woman Edit",arrivals:"New Arrivals",little:"Little Things We Love"};
+  const who=()=>"Ana (Editor)";
+  function log(msg){const h=get("history",[]);h.unshift({at:new Date().toLocaleString(),who:who(),msg});set("history",h.slice(0,100))}
+  function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("on"),2400)}
+  function publish(msg){set("cms",cms);log(msg);toast("Published, live in the app now")}
+  const dk=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+
+  const P={};
+  P.home=()=>`<span class="eyebrow">Content</span><h1 class="h1" style="margin:6px 0 18px">Home layout</h1>
+    <div class="note">Keep the app open in another tab: when you press <b>Publish</b>, it updates instantly. No App Store or Play Store release needed.</div>
+    <div class="panel" style="padding:24px;margin-bottom:28px"><h2 class="h3" style="margin-bottom:14px">Main banner</h2>
+      <div class="two"><div class="field"><label>Eyebrow</label><input class="input" data-h="eyebrow" value="${esc(draft.hero.eyebrow)}"></div>
+      <div class="field"><label>Button label</label><input class="input" data-h="cta" value="${esc(draft.hero.cta)}"></div></div>
+      <div class="field"><label>Headline</label><input class="input" data-h="title" value="${esc(draft.hero.title)}"></div>
+      <div class="field"><label>Subtitle</label><textarea class="input" data-h="subtitle">${esc(draft.hero.subtitle)}</textarea></div>
+      <div class="two"><div class="field"><label>Links to</label><select class="input" data-h="link">${[["#/shop/new","New Arrivals"],["#/edit/gift","The Gift Edit"],["#/look/l1","Outfit of the Week"],["#/edit/woman","The Woman Edit"],["#/soul","Soul Daily"]].map(([v,n])=>`<option value="${v}" ${draft.hero.link===v?"selected":""}>${n}</option>`).join("")}</select></div>
+      <div class="field"><label>Image</label><select class="input" data-h="art">${["arch","dune","orb","bloom","stack"].map(a=>`<option ${draft.hero.art===a?"selected":""}>${a}</option>`).join("")}</select></div></div>
+      <p class="muted" style="font-size:12px">In production, "Image" is an upload with automatic resizing for every screen.</p></div>
+    <h2 class="h3" style="margin-bottom:12px">Sections, in order</h2>
+    <div id="blocks">${draft.blocks.map((b,i)=>`<div class="block-row"><span class="grip"><button data-mv="${i}:-1" aria-label="Move up">▲</button><button data-mv="${i}:1" aria-label="Move down">▼</button></span>
+      <span class="name">${NAMES[b.id]}</span><span class="muted" style="font-size:12px">${b.on?"Visible":"Hidden"}</span><button class="switch" role="switch" aria-checked="${b.on}" data-on="${i}" aria-label="Show ${NAMES[b.id]}"></button></div>`).join("")}</div>
+    <div style="display:flex;gap:12px;margin-top:22px"><button class="btn btn-primary" data-act="pubhome">Publish</button><button class="btn btn-ghost" data-act="reset">Revert to default</button></div>`;
+
+  P.soul=()=>{
+    const today=new Date();
+    const days=[...Array(30)].map((_,i)=>{const d=new Date(today);d.setDate(d.getDate()+i);return d});
+    return `<span class="eyebrow">Faith</span><h1 class="h1" style="margin:6px 0 18px">Soul Daily schedule</h1>
+    <div class="note">The next 30 days. Click a day to choose its verse and write the reflection. Only <b>Scheduled</b> days go live; drafts stay private. Unscheduled days fall back to the approved rotation.</div>
+    <div class="cal">${days.map((d,i)=>{const k=dk(d),s=cms.schedule[k];const v=s?C.verses[s.verse]:null;
+      return `<button class="day ${i===0?"today":""}" data-day="${k}"><b>${d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}</b>
+      <div class="r">${v?esc(v.ref):'<span class="muted">Rotation</span>'}</div>${s?`<span class="st ${s.status}">${s.status}</span>`:""}</button>`}).join("")}</div>
+    <div id="editor"></div>`;
+  };
+  function dayEditor(k){
+    const s=cms.schedule[k]||{verse:0,reflection:"",status:"draft"};
+    $("#editor").innerHTML=`<div class="panel" style="padding:24px;margin-top:24px"><h2 class="h3">${new Date(k+"T12:00").toDateString()}</h2>
+      <div class="field" style="margin-top:14px"><label>Verse (KJV, public domain)</label><select class="input" id="dv">${C.verses.map((v,i)=>`<option value="${i}" ${+s.verse===i?"selected":""}>${esc(v.ref)}: ${esc(v.text.slice(0,60))}…</option>`).join("")}</select></div>
+      <div class="field"><label>Reflection (2–3 sentences)</label><textarea class="input" id="dr" placeholder="Leave empty to use the default reflection">${esc(s.reflection)}</textarea></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" data-save-day="${k}:scheduled">Approve &amp; schedule</button>
+      <button class="btn btn-ghost btn-sm" data-save-day="${k}:draft">Save as draft</button>${cms.schedule[k]?`<button class="btn btn-sm" style="color:var(--burgundy)" data-unschedule="${k}">Remove</button>`:""}</div></div>`;
+    $("#editor").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+
+  P.push=()=>`<span class="eyebrow">Engagement</span><h1 class="h1" style="margin:6px 0 18px">Notifications</h1>
+    <div class="note">Each user only receives the categories they turned on. Daily Soul goes out automatically at each user's chosen time, in their own time zone, once per day.</div>
+    <div class="panel" style="padding:24px"><div class="two"><div class="field"><label>Category</label><select class="input" id="nc"><option>New Arrivals</option><option>Style Inspiration</option><option>Exclusive Offers</option><option>Wishlist Updates</option><option>Daily Soul</option></select></div>
+      <div class="field"><label>Opens</label><select class="input" id="nu"><option value="#/shop/new">New Arrivals</option><option value="#/look/l1">Outfit of the Week</option><option value="#/edit/gift">The Gift Edit</option><option value="#/article/a2">Story: Helena, 53</option><option value="#/verse">Today's Verse</option></select></div></div>
+      <div class="field"><label>Title</label><input class="input" id="nt" value="The Fall Edit is here"></div>
+      <div class="field"><label>Message</label><input class="input" id="nb" value="Soft layers and warm neutrals, just in."></div>
+      <div class="two"><div class="field"><label>Send</label><select class="input" id="nw"><option value="now">Now</option><option value="later">Schedule…</option></select></div><div class="field"><label>Date &amp; time</label><input class="input" type="datetime-local" id="nd"></div></div>
+      <button class="btn btn-primary" data-act="send">Send</button></div>
+    <h2 class="h3" style="margin:28px 0 10px">Sent &amp; scheduled</h2><div class="log">${get("sent",[]).map(s=>`<div><b style="color:var(--chocolate)">${esc(s.title)}</b> · ${esc(s.cat)} · ${esc(s.when)} · opens ${esc(s.url)} · <span>${s.opens} opens</span></div>`).join("")||"<div>Nothing sent yet.</div>"}</div>`;
+
+  P.metrics=()=>{const m=get("metrics",{});const sum=p=>Object.entries(m).filter(([k])=>k.startsWith(p)).reduce((s,[,v])=>s+v,0);
+    const top=(p,label)=>{const r=Object.entries(m).filter(([k])=>k.startsWith(p+":")).sort((a,b)=>b[1]-a[1]).slice(0,5);
+      return `<div class="panel" style="padding:20px"><h3 class="h3" style="font-size:19px;margin-bottom:8px">${label}</h3><div class="log">${r.map(([k,v])=>`<div style="display:flex;justify-content:space-between"><span>${esc(k.split(":")[1])}</span><span>${v}</span></div>`).join("")||"<div>No data yet</div>"}</div></div>`};
+    const tile=(n,l)=>`<div class="panel stat"><div class="n">${n}</div><div class="eyebrow" style="margin-top:6px">${l}</div></div>`;
+    return `<span class="eyebrow">Insights</span><h1 class="h1" style="margin:6px 0 18px">Metrics</h1><div class="note">Live counts from this device while you test the prototype. In production this view reads from the analytics service across all customers (downloads, retention, conversion), and it respects each customer's privacy choices.</div>
+    <div class="stats">${tile(sum("screen"),"Screen views")}${tile(sum("product_view"),"Product views")}${tile(sum("add_to_cart"),"Added to bag")}${tile(sum("purchase"),"Orders")}${tile(sum("verse_open")+sum("soul_view"),"Soul Daily opens")}${tile(sum("save_"),"Saves")}${tile(sum("share"),"Shares")}${tile(sum("push_open"),"Push opens")}</div>
+    <div class="two" style="margin-top:18px">${top("product_view","Most viewed products")}${top("screen","Most visited sections")}${top("look_view","Most viewed looks")}${top("gift_view","Most viewed gift guides")}</div>`};
+
+  P.history=()=>`<span class="eyebrow">Team</span><h1 class="h1" style="margin:6px 0 18px">Change history</h1>
+    <div class="note">Every publish is recorded with who changed what. In production, team members sign in with their own accounts and roles (Admin, Editor, Faith editor).</div>
+    <div class="panel log" style="padding:8px 22px">${get("history",[]).map(h=>`<div><b style="color:var(--chocolate)">${esc(h.msg)}</b><br>${esc(h.who)} · ${esc(h.at)}</div>`).join("")||"<div>No changes yet.</div>"}</div>`;
+
+  let cur="home";
+  function show(p){cur=p;$("#page").innerHTML=P[p]();document.querySelectorAll("#nav button").forEach(b=>b.dataset.p===p?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"))}
+
+  document.addEventListener("input",e=>{const k=e.target.dataset.h;if(k)draft.hero[k]=e.target.value});
+  document.addEventListener("change",e=>{const k=e.target.dataset.h;if(k)draft.hero[k]=e.target.value});
+  document.addEventListener("click",e=>{
+    const el=e.target.closest("button");if(!el)return;const d=el.dataset;
+    if(d.p)return show(d.p);
+    if(d.mv){const[i,n]=d.mv.split(":").map(Number),j=i+n;if(j<0||j>=draft.blocks.length)return;[draft.blocks[i],draft.blocks[j]]=[draft.blocks[j],draft.blocks[i]];return show("home")}
+    if(d.on){const b=draft.blocks[+d.on];b.on=!b.on;return show("home")}
+    if(d.day)return dayEditor(d.day);
+    if(d.saveDay){const[k,status]=d.saveDay.split(":");cms.schedule[k]={verse:+$("#dv").value,reflection:$("#dr").value.trim(),status};
+      publish(`Soul Daily ${k}: ${C.verses[+$("#dv").value].ref} (${status})`);show("soul");return}
+    if(d.unschedule){delete cms.schedule[d.unschedule];publish(`Soul Daily ${d.unschedule}: removed`);show("soul");return}
+    switch(d.act){
+      case "pubhome":cms.home={hero:{...draft.hero},blocks:draft.blocks.map(b=>({...b}))};publish(`Home: "${draft.hero.title}", ${draft.blocks.filter(b=>b.on).length} sections`);break;
+      case "reset":cms.home={};draft={hero:{...C.home.hero},blocks:C.home.blocks.map(b=>({...b}))};publish("Home reverted to default");show("home");break;
+      case "send":{const later=$("#nw").value==="later"&&$("#nd").value;
+        const n={title:$("#nt").value,body:$("#nb").value,url:$("#nu").value,cat:$("#nc").value,when:later?new Date($("#nd").value).toLocaleString():"Sent "+new Date().toLocaleString(),opens:0};
+        const s=get("sent",[]);s.unshift(n);set("sent",s);log(`Notification "${n.title}" (${later?"scheduled":"sent"})`);
+        if(!later)set("push",{...n,t:Date.now()});toast(later?"Scheduled":"Sent; check the app tab");show("push");break}
+    }
+  });
+  show("home");
+})();
+</script>
+</body>
+</html>
